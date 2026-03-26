@@ -1,0 +1,70 @@
+/**
+ * @typedef {Object} ClothingItem
+ * @property {string} id
+ * @property {string} name
+ * @property {'top'|'bottom'|'outerwear'|'shoes'|'accessories'} category
+ * @property {string} subcategory
+ * @property {string[]} styleTags
+ * @property {number} warmthC stackable warmth contribution (°C vs neutral baseline)
+ * @property {'base'|'mid'|'shell'} layering
+ * @property {'high'|'medium'|'low'} mobility
+ * @property {string} [imageUrl]
+ */
+
+/**
+ * Seed clothing library. Categories: top, bottom, outerwear, shoes, accessories
+ * @type {ClothingItem[]}
+ */
+export const SEED_LIBRARY = [
+  /* Tops */
+  { id: "t1", name: "White T-shirt", category: "top", subcategory: "t-shirt", styleTags: ["casual"], warmthC: 3, layering: "base", mobility: "high" },
+  { id: "t2", name: "Striped long-sleeve tee", category: "top", subcategory: "longsleeve", styleTags: ["casual"], warmthC: 5, layering: "base", mobility: "high" },
+  { id: "t3", name: "Oxford shirt", category: "top", subcategory: "shirt", styleTags: ["smart", "casual"], warmthC: 4, layering: "base", mobility: "medium" },
+  { id: "t4", name: "Light knit sweater", category: "top", subcategory: "sweater", styleTags: ["casual"], warmthC: 8, layering: "mid", mobility: "high" },
+  { id: "t5", name: "Turtleneck sweater", category: "top", subcategory: "sweater", styleTags: ["casual"], warmthC: 12, layering: "mid", mobility: "medium" },
+  { id: "t6", name: "Silk blouse", category: "top", subcategory: "shirt", styleTags: ["smart"], warmthC: 2, layering: "base", mobility: "medium" },
+  { id: "t7", name: "Hoodie", category: "top", subcategory: "hoodie", styleTags: ["casual"], warmthC: 9, layering: "mid", mobility: "high" },
+
+  /* Bottoms */
+  { id: "b1", name: "Straight jeans", category: "bottom", subcategory: "jeans", styleTags: ["casual"], warmthC: 5, layering: "base", mobility: "high" },
+  { id: "b2", name: "Khaki chinos", category: "bottom", subcategory: "chinos", styleTags: ["casual", "smart"], warmthC: 4, layering: "base", mobility: "high" },
+  { id: "b3", name: "Dress trousers", category: "bottom", subcategory: "trousers", styleTags: ["smart"], warmthC: 4, layering: "base", mobility: "medium" },
+  { id: "b4", name: "Athletic shorts", category: "bottom", subcategory: "shorts", styleTags: ["casual"], warmthC: 1, layering: "base", mobility: "high" },
+  { id: "b5", name: "Wool dress pants", category: "bottom", subcategory: "trousers", styleTags: ["smart"], warmthC: 7, layering: "base", mobility: "low" },
+  { id: "b6", name: "Cargo pants", category: "bottom", subcategory: "cargo", styleTags: ["casual"], warmthC: 5, layering: "base", mobility: "high" },
+
+  /* Outerwear */
+  { id: "o1", name: "Light trench", category: "outerwear", subcategory: "trench", styleTags: ["smart", "casual"], warmthC: 6, layering: "shell", mobility: "medium" },
+  { id: "o2", name: "Short down jacket", category: "outerwear", subcategory: "down", styleTags: ["casual"], warmthC: 17, layering: "shell", mobility: "medium" },
+  { id: "o3", name: "Wool overcoat", category: "outerwear", subcategory: "coat", styleTags: ["smart"], warmthC: 14, layering: "shell", mobility: "low" },
+  { id: "o4", name: "Softshell jacket", category: "outerwear", subcategory: "jacket", styleTags: ["casual"], warmthC: 10, layering: "shell", mobility: "high" },
+  { id: "o5", name: "Denim jacket", category: "outerwear", subcategory: "jacket", styleTags: ["casual"], warmthC: 7, layering: "mid", mobility: "high" },
+  { id: "o6", name: "Waterproof shell", category: "outerwear", subcategory: "rain", styleTags: ["casual"], warmthC: 9, layering: "shell", mobility: "high" },
+
+  /* Shoes */
+  { id: "s1", name: "Canvas sneakers", category: "shoes", subcategory: "sneakers", styleTags: ["casual"], warmthC: 2, layering: "base", mobility: "high" },
+  { id: "s2", name: "Leather loafers", category: "shoes", subcategory: "loafers", styleTags: ["smart", "casual"], warmthC: 3, layering: "base", mobility: "medium" },
+  { id: "s3", name: "Waterproof boots", category: "shoes", subcategory: "boots", styleTags: ["casual"], warmthC: 7, layering: "base", mobility: "medium" },
+  { id: "s4", name: "Running shoes", category: "shoes", subcategory: "sneakers", styleTags: ["casual"], warmthC: 2, layering: "base", mobility: "high" },
+  { id: "s5", name: "Sandals", category: "shoes", subcategory: "sandals", styleTags: ["casual"], warmthC: 1, layering: "base", mobility: "medium" },
+
+  /* Accessories */
+  { id: "a1", name: "Cashmere scarf", category: "accessories", subcategory: "scarf", styleTags: ["casual", "smart"], warmthC: 5, layering: "mid", mobility: "high" },
+  { id: "a2", name: "Baseball cap", category: "accessories", subcategory: "hat", styleTags: ["casual"], warmthC: 2, layering: "base", mobility: "high" },
+  { id: "a3", name: "Leather belt", category: "accessories", subcategory: "belt", styleTags: ["smart", "casual"], warmthC: 0, layering: "base", mobility: "high" },
+  { id: "a4", name: "Knit gloves", category: "accessories", subcategory: "gloves", styleTags: ["casual"], warmthC: 4, layering: "mid", mobility: "medium" },
+  { id: "a5", name: "Minimal tote", category: "accessories", subcategory: "bag", styleTags: ["casual", "shopping"], warmthC: 0, layering: "base", mobility: "medium" },
+  { id: "a6", name: "Metal watch", category: "accessories", subcategory: "watch", styleTags: ["smart"], warmthC: 0, layering: "base", mobility: "high" },
+];
+
+export const CATEGORY_LABELS = {
+  top: "Top",
+  bottom: "Bottom",
+  outerwear: "Outerwear",
+  shoes: "Shoes",
+  accessories: "Accessories",
+};
+
+export function cloneLibrary() {
+  return SEED_LIBRARY.map((item) => ({ ...item }));
+}

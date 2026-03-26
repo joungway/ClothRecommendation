@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Outfit · Weather Context</title>
+  <link rel="stylesheet" href="./css/main.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1 class="logo">Outfit Lab</h1>
+      <p class="tagline">Outfit drafts driven by weather and context</p>
+    </header>
+
+    <div class="app-body">
+      <main class="main-column">
+        <aside id="feedback-root" class="panel panel--feedback" aria-label="Live feedback"></aside>
+
+        <section id="weather-root" class="panel panel--weather" aria-label="Weather"></section>
+
+        <section id="inputs-root" class="panel panel--inputs" aria-label="Context and trip"></section>
+
+        <section id="outfits-root" class="panel panel--outfits" aria-label="Outfit suggestions"></section>
+      </main>
+
+      <aside id="sidebar-root" class="panel panel--sidebar" aria-label="Wardrobe library"></aside>
+    </div>
+  </div>
+
+  <!-- ES modules require http(s). Use python3 -m http.server locally or GitHub Pages online. -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
