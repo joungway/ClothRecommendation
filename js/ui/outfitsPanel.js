@@ -18,6 +18,49 @@ import { CATEGORY_LABELS } from "../data/clothingLibrary.js";
 /** Each outfit baseline: one top, bottom, and shoes; empty slots stay until filled */
 const MANDATORY_BASELINE = ["top", "bottom", "shoes"];
 
+/**
+ * Wireframe layout: [accessories] [top] [outerwear]
+ *                      —— [bottom] ——
+ *                      —— [shoes] ——
+ */
+function firstItemWithImage(items, category) {
+  const list = Array.isArray(items) ? items : [];
+  return list.find(
+    (i) =>
+      i.category === category &&
+      i.imageUrl &&
+      String(i.imageUrl).trim()
+  );
+}
+
+function renderPreviewSlot(item, slotClass, labelKey) {
+  const label = CATEGORY_LABELS[labelKey] || labelKey;
+  if (item) {
+    return `<div class="outfit-preview-slot outfit-preview-slot--filled ${slotClass}"><img class="outfit-preview-slot-img" src="${item.imageUrl}" alt="" loading="lazy" /></div>`;
+  }
+  return `<div class="outfit-preview-slot outfit-preview-slot--empty ${slotClass}" aria-hidden="true"><span class="outfit-preview-slot-label">${label}</span></div>`;
+}
+
+function renderOutfitPreviewHtml(displayItems) {
+  const items = Array.isArray(displayItems) ? displayItems : [];
+  const acc = firstItemWithImage(items, "accessories");
+  const top = firstItemWithImage(items, "top");
+  const outer = firstItemWithImage(items, "outerwear");
+  const bottom = firstItemWithImage(items, "bottom");
+  const shoes = firstItemWithImage(items, "shoes");
+
+  return `
+    <div class="outfit-preview outfit-preview--grid" role="img" aria-label="Outfit preview">
+      <div class="outfit-preview-grid">
+        ${renderPreviewSlot(acc, "outfit-preview-slot--accessories", "accessories")}
+        ${renderPreviewSlot(top, "outfit-preview-slot--top", "top")}
+        ${renderPreviewSlot(outer, "outfit-preview-slot--outerwear", "outerwear")}
+        ${renderPreviewSlot(bottom, "outfit-preview-slot--bottom", "bottom")}
+        ${renderPreviewSlot(shoes, "outfit-preview-slot--shoes", "shoes")}
+      </div>
+    </div>`;
+}
+
 const EMPTY_SLOT_MSG = {
   top: "Choose a top (required slot)",
   bottom: "Choose a bottom (required slot)",
@@ -94,8 +137,12 @@ function renderFilledItemRow(
     baselineSlot
       ? `<span class="baseline-pill" title="Required slot for this outfit">Required</span>`
       : "";
+  const thumb = it.imageUrl
+    ? `<span class="item-row-thumb-wrap"><img class="item-row-thumb" src="${it.imageUrl}" alt="" loading="lazy" /></span>`
+    : `<span class="item-row-thumb-wrap item-row-thumb-wrap--empty" aria-hidden="true"></span>`;
   return `
             <li class="${rowClass}${baselineClass}" data-slot-cat="${it.category}"${baselineSlot ? ' data-baseline-slot="true"' : ""}>
+              ${thumb}
               <div class="item-hover-zone">
                 <div class="item-name">${pill}${it.name}</div>
                 <div class="item-meta"><span class="cat-dot" data-cat="${it.category}" title="${CATEGORY_LABELS[it.category] || it.category}"></span><span>${CATEGORY_LABELS[it.category] || it.category} · ${it.subcategory}</span></div>
@@ -122,6 +169,7 @@ function renderEmptyMandatoryRow(cat, isActive, slot) {
   const label = CATEGORY_LABELS[cat] || cat;
   return `
             <li class="${rowClass}" data-slot-cat="${cat}" data-empty-required="true" data-baseline-slot="true" role="listitem" aria-label="${label} required, not selected">
+              <span class="item-row-thumb-wrap item-row-thumb-wrap--empty" aria-hidden="true"></span>
               <div class="item-hover-zone" tabindex="0">
                 <div class="item-name empty-slot-title"><span class="baseline-pill" title="Required slot for this outfit">Required</span> Not selected</div>
                 <div class="item-meta">
@@ -207,35 +255,46 @@ function renderCard(rec, idx, opts) {
             </div>`
     : "";
 
+  const previewHtml = renderOutfitPreviewHtml(displayItems);
+
   return `
-          <article class="outfit-card ${isActive ? "outfit-card--active" : ""}" data-idx="${idx}">
-            <div class="outfit-card-header">
-              <div class="outfit-title">Option ${idx + 1}</div>
-              <div class="comfort-badge">Comfort ${score ?? "—"}</div>
-            </div>
-            <p class="outfit-explain">${explain}</p>
-            <div class="pros-cons">
-              <div>
-                <div class="pros-cons-title">Pros</div>
-                <ul>${pros}</ul>
+          <article class="outfit-card outfit-card--row ${isActive ? "outfit-card--active" : ""}" data-idx="${idx}">
+            <div class="outfit-card-col outfit-card-col--meta">
+              <div class="outfit-card-header">
+                <div class="outfit-title">Option ${idx + 1}</div>
+                <div class="comfort-badge">Comfort ${score ?? "—"}</div>
               </div>
-              <div>
-                <div class="pros-cons-title">Watch-outs</div>
-                <ul>${cons}</ul>
+              <p class="outfit-explain">${explain}</p>
+              <div class="pros-cons">
+                <div>
+                  <div class="pros-cons-title">Pros</div>
+                  <ul>${pros}</ul>
+                </div>
+                <div>
+                  <div class="pros-cons-title">Watch-outs</div>
+                  <ul>${cons}</ul>
+                </div>
               </div>
+              <div class="btn-row outfit-card-actions">
+                <button type="button" class="${isActive ? "primary" : ""}" data-select-outfit="${idx}">
+                  ${isActive ? "Editing this outfit" : "Edit this outfit first"}
+                </button>
+              </div>
+              ${pickRow}
+              ${
+                isActive
+                  ? `<p class="weather-meta outfit-edit-hint">Top, bottom, and shoes are required—after removal, empty slots stay until you pick from the wardrobe. Click a row to select a slot; other category tabs dim when locked (hover for why).</p>`
+                  : ""
+              }
             </div>
-            <ul class="items-list">${itemsHtml}</ul>
-            <div class="btn-row outfit-card-actions">
-              <button type="button" class="${isActive ? "primary" : ""}" data-select-outfit="${idx}">
-                ${isActive ? "Editing this outfit" : "Edit this outfit first"}
-              </button>
+            <div class="outfit-card-col outfit-card-col--items">
+              <div class="outfit-col-label">Selected pieces</div>
+              <ul class="items-list">${itemsHtml}</ul>
             </div>
-            ${pickRow}
-            ${
-              isActive
-                ? `<p class="weather-meta outfit-edit-hint">Top, bottom, and shoes are required—after removal, empty slots stay until you pick from the wardrobe. Click a row to select a slot; other category tabs dim when locked (hover for why).</p>`
-                : ""
-            }
+            <div class="outfit-card-col outfit-card-col--preview">
+              <div class="outfit-col-label">Assembled look</div>
+              ${previewHtml}
+            </div>
           </article>
         `;
 }
@@ -306,11 +365,7 @@ export function mountOutfitsPanel(root) {
       syncEditingFromActive();
     }
 
-    const listClass = [
-      "outfits-list",
-      "outfits-list--horizontal",
-      confirmed || recs.length <= 2 ? "outfits-list--few" : "",
-    ]
+    const listClass = ["outfits-list", "outfits-list--rows"]
       .filter(Boolean)
       .join(" ");
 
