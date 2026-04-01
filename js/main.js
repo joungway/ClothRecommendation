@@ -1,5 +1,4 @@
 import { subscribe, setWeather } from "./state.js";
-import { bootstrapInitialWeather } from "./weather.js";
 import { recomputeRecommendations } from "./recommendFlow.js";
 import { mountWeatherPanel } from "./ui/weatherPanel.js";
 import { mountInputsPanel } from "./ui/inputsPanel.js";
@@ -27,10 +26,5 @@ subscribe(() => {
   sidebarUi.render();
 });
 
-(async () => {
-  setWeather(null);
-  weatherUi.render();
-  const w = await bootstrapInitialWeather();
-  setWeather(w);
-  recomputeRecommendations();
-})();
+setWeather(null);
+recomputeRecommendations();

@@ -272,6 +272,10 @@ export function mountWeatherPanel(root) {
 
   btn.addEventListener("click", async () => {
     const w = state.weather;
+    if (!w) {
+      showSearchStatus("Please select a location first.", true);
+      return;
+    }
     if (w?.source === "api" && w.lat != null && w.lon != null) {
       body.innerHTML = `<p class="weather-meta">Loading…</p>`;
       try {
@@ -291,7 +295,11 @@ export function mountWeatherPanel(root) {
   function render() {
     const w = state.weather;
     if (!w) {
-      body.innerHTML = `<p class="weather-meta">Loading…</p>`;
+      body.innerHTML = `
+        <div class="weather-body-empty" role="status">
+          <p class="weather-body-empty-title">Please select a location.</p>
+          <p class="weather-body-empty-hint">Search for a US city or use your current location.</p>
+        </div>`;
       return;
     }
     body.innerHTML = buildWeatherVisualHtml(w);

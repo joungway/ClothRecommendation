@@ -181,24 +181,6 @@ export async function fetchWeatherSnapshot(lat, lon, locationLabel) {
   };
 }
 
-export function loadSavedLocation() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const o = JSON.parse(raw);
-    if (
-      typeof o.lat === "number" &&
-      typeof o.lon === "number" &&
-      typeof o.label === "string"
-    ) {
-      return { lat: o.lat, lon: o.lon, label: o.label };
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
 export function saveLocation(loc) {
   localStorage.setItem(
     STORAGE_KEY,
@@ -228,17 +210,3 @@ export function generateMockWeather() {
   };
 }
 
-/**
- * On load: use saved coordinates if present, else mock weather.
- */
-export async function bootstrapInitialWeather() {
-  const saved = loadSavedLocation();
-  if (saved) {
-    try {
-      return await fetchWeatherSnapshot(saved.lat, saved.lon, saved.label);
-    } catch {
-      /* fall through */
-    }
-  }
-  return generateMockWeather();
-}

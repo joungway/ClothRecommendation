@@ -359,9 +359,12 @@ export function mountOutfitsPanel(root) {
     const band = w ? effectiveTempBand(w, ctx) : null;
 
     if (!recs.length) {
+      const emptyMsg = !w
+        ? "Select a location in Weather above to see outfit suggestions."
+        : "No suggestions yet—refresh weather or relax your context.";
       root.innerHTML = `
         <h2>Outfits</h2>
-        <p class="weather-meta">No suggestions yet—refresh weather or relax your context.</p>
+        <p class="weather-meta">${emptyMsg}</p>
       `;
       return;
     }

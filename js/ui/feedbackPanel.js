@@ -54,9 +54,9 @@ export function mountFeedbackPanel(root, subscribe) {
 
     if (!showFull) {
       const hintPrimary = hasOutfit
-        ? "Waiting for weather…"
+        ? "Select a location in Weather to load conditions."
         : "Start editing an outfit to see feedback.";
-      const hintSecondary = !hasOutfit && !w ? "Waiting for weather…" : null;
+      const hintSecondary = !hasOutfit && !w ? "Weather is required for warmth feedback." : null;
       root.innerHTML = placeholderPanel(hintPrimary, hintSecondary);
       return;
     }
