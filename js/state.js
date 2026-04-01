@@ -1,7 +1,23 @@
 import { cloneLibrary } from "./data/clothingLibrary.js";
 import { effectiveTempBand, outfitComfortScore } from "./engine/recommend.js";
 
-/** @typedef {{ currentTempC: number, dayMinC: number, dayMaxC: number, feelsLikeC: number, conditionKey: string, conditionLabel: string, isWindy: boolean, isRainy: boolean, updatedAt: string }} WeatherSnapshot */
+/**
+ * @typedef {{
+ *   currentTempC: number,
+ *   dayMinC: number,
+ *   dayMaxC: number,
+ *   feelsLikeC: number,
+ *   conditionKey: string,
+ *   conditionLabel: string,
+ *   isWindy: boolean,
+ *   isRainy: boolean,
+ *   updatedAt: string,
+ *   locationLabel?: string,
+ *   lat?: number,
+ *   lon?: number,
+ *   source?: 'api' | 'mock'
+ * }} WeatherSnapshot
+ */
 
 const listeners = new Set();
 
@@ -18,7 +34,8 @@ export const state = {
   library: cloneLibrary(),
   /** @type {import('./engine/recommend.js').Outfit[]} */
   recommendations: [],
-  activeRecIndex: 0,
+  /** -1 = none selected for editing */
+  activeRecIndex: -1,
   /** @type {import('./engine/recommend.js').Outfit | null} */
   editingOutfit: null,
   /** @type {string | null} */
@@ -49,7 +66,7 @@ export function setContext(partial, silent = false) {
 
 export function setRecommendations(list) {
   state.recommendations = list;
-  if (state.activeRecIndex >= list.length) state.activeRecIndex = 0;
+  state.activeRecIndex = -1;
   if (list.length > 1) state.outfitsConfirmed = false;
   syncEditingFromActive();
   notify();
@@ -62,7 +79,12 @@ export function setActiveRecIndex(i) {
 }
 
 export function syncEditingFromActive() {
-  const rec = state.recommendations[state.activeRecIndex];
+  const i = state.activeRecIndex;
+  if (i < 0) {
+    state.editingOutfit = null;
+    return;
+  }
+  const rec = state.recommendations[i];
   if (!rec) {
     state.editingOutfit = null;
     return;

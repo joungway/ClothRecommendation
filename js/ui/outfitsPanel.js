@@ -250,15 +250,20 @@ function renderCard(rec, idx, opts) {
             <div class="outfit-pick-row">
               <label class="outfit-pick-label">
                 <input type="radio" name="outfit-pick" value="${idx}" class="outfit-pick-input" />
-                <span>Use this outfit</span>
+                <span>keep this outfit</span>
               </label>
             </div>`
     : "";
 
   const previewHtml = renderOutfitPreviewHtml(displayItems);
 
+  const dimInactive =
+    active >= 0 &&
+    !isActive &&
+    Array.isArray(opts.recs) &&
+    opts.recs.length > 1;
   return `
-          <article class="outfit-card outfit-card--row ${isActive ? "outfit-card--active" : ""}" data-idx="${idx}">
+          <article class="outfit-card outfit-card--row ${isActive ? "outfit-card--active" : ""}${dimInactive ? " outfit-card--inactive" : ""}" data-idx="${idx}">
             <div class="outfit-card-col outfit-card-col--meta">
               <div class="outfit-card-header">
                 <div class="outfit-title">Option ${idx + 1}</div>
@@ -373,7 +378,7 @@ export function mountOutfitsPanel(root) {
       ? `
       <div class="outfits-toolbar">
         <button type="button" class="primary" id="btn-regen-two">Generate two new options</button>
-        <p class="weather-meta outfits-toolbar-note">Draws two new outfits from current weather and trip settings; replaces your current picks with new candidates.</p>
+        <p class="weather-meta outfits-toolbar-note">Keeps your chosen look as option 1 and adds two alternatives in a similar style (from each piece’s tags), still matched to current weather.</p>
       </div>`
       : "";
 
@@ -386,6 +391,7 @@ export function mountOutfitsPanel(root) {
           slot,
           edit,
           active,
+          recs,
           showPickControls: !confirmed,
         })
       )
@@ -393,7 +399,7 @@ export function mountOutfitsPanel(root) {
 
     root.innerHTML = `<h2>Outfits</h2>
       ${toolbar}
-      <p class="weather-meta cat-hint">Each piece shows stackable “+°C warmth”; hover for outfit total vs suggested warmth. Color bar and dot show category.${confirmed ? " Tap “Generate two new options” above for fresh picks." : " Check “Use this outfit” to keep only that look; you can “Edit this outfit first” before confirming."}</p>
+      <p class="weather-meta cat-hint">Each piece shows stackable “+°C warmth”; hover for outfit total vs suggested warmth. Color bar and dot show category.${confirmed ? " Tap “Generate two new options” to keep this look and see two more in a similar style." : " Check “keep this outfit” to keep only that look; you can “Edit this outfit first” before confirming."}</p>
       <div class="${listClass}">${cards}</div>`;
     bindCard(root);
   }

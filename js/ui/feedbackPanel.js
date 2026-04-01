@@ -25,19 +25,39 @@ function warmthFeedback(total, req) {
   return { lines, kind };
 }
 
+function placeholderPanel(hintPrimary, hintSecondary) {
+  const sub =
+    hintSecondary != null
+      ? `<p class="feedback-placeholder-sub">${hintSecondary}</p>`
+      : "";
+  return `
+      <h2>Live feedback</h2>
+      <div class="feedback-layout feedback-layout--placeholder">
+        <div class="feedback-col-main">
+          <div class="feedback-suggested"><span class="feedback-metric-label">Suggested warmth ~</span><span class="feedback-suggested-val feedback-placeholder-val">--</span></div>
+          <div class="feedback-range"><span class="feedback-metric-label">Outfit warmth: </span><span class="feedback-warmth-total feedback-placeholder-val">--</span> <span class="feedback-stack-note">(stackable)</span></div>
+          <p class="feedback-placeholder-hint">${hintPrimary}</p>
+          ${sub}
+          <div class="feedback-ref">Reference baseline --</div>
+        </div>
+        <div class="feedback-comfort-badge" aria-label="Comfort score"><span class="feedback-metric-label">Comfort score </span><span class="feedback-comfort-val feedback-placeholder-val">--</span></div>
+      </div>
+    `;
+}
+
 export function mountFeedbackPanel(root, subscribe) {
   function render() {
     const w = state.weather;
     const edit = state.editingOutfit;
-    if (!w) {
-      root.innerHTML = `<h2>Live feedback</h2><p class="weather-meta">Waiting for weather…</p>`;
-      return;
-    }
-    if (!edit || !edit.items.length) {
-      root.innerHTML = `
-        <h2>Live feedback</h2>
-        <p class="weather-meta">Pick an outfit to see warmth totals and tips.</p>
-      `;
+    const hasOutfit = Boolean(edit && edit.items.length);
+    const showFull = Boolean(w && hasOutfit);
+
+    if (!showFull) {
+      const hintPrimary = hasOutfit
+        ? "Waiting for weather…"
+        : "Start editing an outfit to see feedback.";
+      const hintSecondary = !hasOutfit && !w ? "Waiting for weather…" : null;
+      root.innerHTML = placeholderPanel(hintPrimary, hintSecondary);
       return;
     }
 
@@ -56,9 +76,15 @@ export function mountFeedbackPanel(root, subscribe) {
 
     root.innerHTML = `
       <h2>Live feedback</h2>
-      <div class="feedback-range">Outfit warmth: <span class="feedback-warmth-total">+${total.toFixed(1)}°C</span> (stackable)</div>
-      <div class="weather-meta" style="margin-top:0.35rem">Reference baseline ${NEUTRAL_COMFORT_C}°C · suggested warmth ~<strong>+${req.toFixed(1)}°C</strong> · comfort score ${comfort}</div>
-      ${lines.map((l) => `<div class="${warnClass}">${l}</div>`).join("")}
+      <div class="feedback-layout">
+        <div class="feedback-col-main">
+          <div class="feedback-suggested"><span class="feedback-metric-label">Suggested warmth ~</span><span class="feedback-suggested-val">+${req.toFixed(1)}°C</span></div>
+          <div class="feedback-range"><span class="feedback-metric-label">Outfit warmth: </span><span class="feedback-warmth-total">+${total.toFixed(1)}°C</span> <span class="feedback-stack-note">(stackable)</span></div>
+          ${lines.map((l) => `<div class="${warnClass}">${l}</div>`).join("")}
+          <div class="feedback-ref">Reference baseline ${NEUTRAL_COMFORT_C}°C</div>
+        </div>
+        <div class="feedback-comfort-badge" aria-label="Comfort score"><span class="feedback-metric-label">Comfort score </span><span class="feedback-comfort-val">${comfort}</span></div>
+      </div>
     `;
   }
 

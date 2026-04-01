@@ -1,5 +1,5 @@
 import { subscribe, setWeather } from "./state.js";
-import { generateMockWeather } from "./weather.js";
+import { bootstrapInitialWeather } from "./weather.js";
 import { recomputeRecommendations } from "./recommendFlow.js";
 import { mountWeatherPanel } from "./ui/weatherPanel.js";
 import { mountInputsPanel } from "./ui/inputsPanel.js";
@@ -27,5 +27,10 @@ subscribe(() => {
   sidebarUi.render();
 });
 
-setWeather(generateMockWeather());
-recomputeRecommendations();
+(async () => {
+  setWeather(null);
+  weatherUi.render();
+  const w = await bootstrapInitialWeather();
+  setWeather(w);
+  recomputeRecommendations();
+})();

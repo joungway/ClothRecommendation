@@ -208,11 +208,22 @@ export function mountSidebar(root) {
       const warmthC = Math.round(2 + Math.random() * 11);
       const subPick = {
         top: ["t-shirt", "shirt", "sweater"],
-        bottom: ["jeans", "chinos", "trousers"],
+        bottom: ["jeans", "chinos", "trousers", "skirt"],
         outerwear: ["jacket", "coat"],
         shoes: ["sneakers", "boots"],
         accessories: ["bag", "hat", "scarf"],
-      }[cat][Math.floor(Math.random() * 3)];
+      }[cat][
+        Math.floor(
+          Math.random() *
+            {
+              top: 3,
+              bottom: 4,
+              outerwear: 2,
+              shoes: 2,
+              accessories: 3,
+            }[cat]
+        )
+      ];
       const styleRoll = Math.random() > 0.5 ? ["casual"] : ["casual", "smart"];
       const item = {
         id: `custom-${n}`,

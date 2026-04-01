@@ -137,6 +137,46 @@ function pickRandomTop(items, weather, ctx, band, n = 8) {
   return shuffle(scored.slice(0, Math.min(n, scored.length)).map((x) => x.it));
 }
 
+/** Count styleTags across anchor outfit pieces (library already tags each item). */
+function styleProfileFromItems(items) {
+  const m = new Map();
+  for (const it of items) {
+    for (const t of it.styleTags || []) {
+      m.set(t, (m.get(t) || 0) + 1);
+    }
+  }
+  return m;
+}
+
+function styleAlignmentBonus(item, tagWeights) {
+  if (!tagWeights || tagWeights.size === 0) return 0;
+  let b = 0;
+  for (const t of item.styleTags || []) {
+    b += tagWeights.get(t) || 0;
+  }
+  return b * 1.6;
+}
+
+/**
+ * Same as pickRandomTop but boosts items whose styleTags overlap the kept outfit.
+ */
+function pickRandomTopStyled(items, weather, ctx, band, tagWeights, n = 8) {
+  const scored = items
+    .map((it) => ({
+      it,
+      s: scoreItem(it, weather, ctx, band) + styleAlignmentBonus(it, tagWeights),
+    }))
+    .sort((a, b) => b.s - a.s);
+  return shuffle(scored.slice(0, Math.min(n, scored.length)).map((x) => x.it));
+}
+
+function outfitItemSignature(items) {
+  return items
+    .map((i) => i.id)
+    .sort()
+    .join("|");
+}
+
 /**
  * @param {Outfit} outfit
  * @param {import('../state.js').WeatherSnapshot} weather
@@ -262,11 +302,32 @@ function nearestWarmth(pool, category, target, k) {
     .slice(0, k);
 }
 
+/** Prefer warmth targets but pull toward anchor styleTags when provided. */
+function nearestWarmthStyled(pool, category, target, k, tagWeights) {
+  const items = byCategory(pool, category);
+  if (!items.length) return [];
+  if (!tagWeights || tagWeights.size === 0) {
+    return nearestWarmth(pool, category, target, k);
+  }
+  const scale = 2.2;
+  return [...items]
+    .map((it) => ({
+      it,
+      d:
+        Math.abs((Number(it.warmthC) || 0) - target) -
+        styleAlignmentBonus(it, tagWeights) * scale,
+    }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, k)
+    .map((x) => x.it);
+}
+
 /**
  * Enumerate warmth mixes near demand; aim for comfort ≥ MIN_COMFORT_RETURNED
  * @param {Set<string>} existingSigs
+ * @param {Map<string, number> | null} [tagWeights]
  */
-function synthesizeHighComfortOutfits(weather, ctx, band, pool, needCount, existingSigs) {
+function synthesizeHighComfortOutfits(weather, ctx, band, pool, needCount, existingSigs, tagWeights = null) {
   const req = requiredWarmth(weather, ctx, band);
   const needOuter =
     weather.isRainy ||
@@ -279,17 +340,22 @@ function synthesizeHighComfortOutfits(weather, ctx, band, pool, needCount, exist
   let tShoe = Math.max(1.5, req * 0.12);
   let tOuter = needOuter ? Math.max(6, req * 0.34) : 0;
 
-  const tops = nearestWarmth(pool, "top", tTop, 7);
-  const bottoms = nearestWarmth(pool, "bottom", tBot, 7);
-  const shoes = nearestWarmth(pool, "shoes", tShoe, 6);
-  let outers = needOuter ? nearestWarmth(pool, "outerwear", tOuter, 6) : [];
+  const nw = (cat, t, k) =>
+    tagWeights && tagWeights.size > 0
+      ? nearestWarmthStyled(pool, cat, t, k, tagWeights)
+      : nearestWarmth(pool, cat, t, k);
+
+  const tops = nw("top", tTop, 7);
+  const bottoms = nw("bottom", tBot, 7);
+  const shoes = nw("shoes", tShoe, 6);
+  let outers = needOuter ? nw("outerwear", tOuter, 6) : [];
   if (needOuter && outers.length === 0) {
     outers = byCategory(pool, "outerwear").slice(0, 8);
   }
   const outerList = needOuter ? outers : [null];
   const accPool = byCategory(pool, "accessories");
   const accTry = accPool.length
-    ? nearestWarmth(pool, "accessories", Math.max(1, req * 0.08), 4)
+    ? nw("accessories", Math.max(1, req * 0.08), 4)
     : [];
 
   const built = [];
@@ -350,20 +416,36 @@ function synthesizeHighComfortOutfits(weather, ctx, band, pool, needCount, exist
  * @param {typeof import('../state.js').state.context} ctx
  * @param {ClothingItem[]} library
  * @param {number} [maxOutfits=3]
+ * @param {{ anchorOutfit?: Outfit }} [options]
  * @returns {Outfit[]}
  */
-export function recommendOutfits(weather, ctx, library, maxOutfits = 3) {
+export function recommendOutfits(weather, ctx, library, maxOutfits = 3, options = {}) {
   const band = effectiveTempBand(weather, ctx);
   const pool = filterLibrary(library);
   if (pool.length < 6) {
     return ensureMinComfortOutfits(fallbackOutfits(weather, ctx, library, band), weather, ctx, band, pool);
   }
 
-  const tops = pickRandomTop(byCategory(pool, "top"), weather, ctx, band);
-  const bottoms = pickRandomTop(byCategory(pool, "bottom"), weather, ctx, band);
-  const shoes = pickRandomTop(byCategory(pool, "shoes"), weather, ctx, band);
-  const outers = pickRandomTop(byCategory(pool, "outerwear"), weather, ctx, band, 12);
-  const accs = pickRandomTop(byCategory(pool, "accessories"), weather, ctx, band, 10);
+  const anchorOutfit = options.anchorOutfit;
+  const tagWeights =
+    anchorOutfit && anchorOutfit.items?.length
+      ? styleProfileFromItems(anchorOutfit.items)
+      : null;
+  const excludeSigs = new Set();
+  if (anchorOutfit && anchorOutfit.items?.length) {
+    excludeSigs.add(outfitItemSignature(anchorOutfit.items));
+  }
+
+  const pickPool = (items, n) =>
+    tagWeights && tagWeights.size > 0
+      ? pickRandomTopStyled(items, weather, ctx, band, tagWeights, n)
+      : pickRandomTop(items, weather, ctx, band, n);
+
+  const tops = pickPool(byCategory(pool, "top"), 8);
+  const bottoms = pickPool(byCategory(pool, "bottom"), 8);
+  const shoes = pickPool(byCategory(pool, "shoes"), 8);
+  const outers = pickPool(byCategory(pool, "outerwear"), 12);
+  const accs = pickPool(byCategory(pool, "accessories"), 10);
 
   const candidates = [];
   const tries = 96;
@@ -408,6 +490,7 @@ export function recommendOutfits(weather, ctx, library, maxOutfits = 3) {
       .map((i) => i.id)
       .sort()
       .join("|");
+    if (excludeSigs.has(sig)) continue;
     if (candidates.some((c) => c._sig === sig)) continue;
     candidates.push({
       id,
@@ -426,7 +509,7 @@ export function recommendOutfits(weather, ctx, library, maxOutfits = 3) {
 
   candidates.sort((a, b) => b.comfortScore - a.comfortScore);
   const cap = Math.max(1, Math.min(5, maxOutfits));
-  const sigSet = new Set();
+  const sigSet = new Set(excludeSigs);
   /** @type {typeof candidates} */
   const selected = [];
 
@@ -445,7 +528,8 @@ export function recommendOutfits(weather, ctx, library, maxOutfits = 3) {
       band,
       pool,
       cap - selected.length + 2,
-      sigSet
+      sigSet,
+      tagWeights
     );
     if (!synth.length) break;
     for (const s of synth) {
